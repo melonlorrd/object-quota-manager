@@ -1,0 +1,18 @@
+apiVersion: quota.melonlorrd.dev/v1alpha1
+kind: ObjectQuota
+metadata:
+  name: limit-quota
+  namespace: quota-e2e
+spec:
+  fileDescriptors: 50
+  processes: 15
+---
+apiVersion: quota.melonlorrd.dev/v1alpha1
+kind: ObjectQuota
+metadata:
+  name: top-consumer-quota
+  namespace: quota-e2e-top
+spec:
+  fileDescriptors: 40
+  processes: 20
+  leaseBatchSize: 40

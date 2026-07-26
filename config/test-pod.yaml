@@ -1,0 +1,163 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: fd-under
+  namespace: quota-e2e
+spec:
+  restartPolicy: Never
+  containers:
+    - name: stress
+      image: busybox
+      command:
+        - sh
+        - -c
+        - |
+          for i in $(seq 1 10); do
+            eval "exec $((i + 100))>/dev/null" 2>/dev/null
+          done
+          echo "opened 10 FDs, surviving"
+          sleep 30
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: fd-over
+  namespace: quota-e2e
+spec:
+  restartPolicy: Never
+  containers:
+    - name: stress
+      image: busybox
+      command:
+        - sh
+        - -c
+        - |
+          sleep 5
+          for i in $(seq 1 100); do
+            eval "exec $((i + 100))>/dev/null" 2>/dev/null
+          done
+          echo "survived"
+          sleep 5
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: proc-under
+  namespace: quota-e2e
+spec:
+  restartPolicy: Never
+  containers:
+    - name: fork-stress
+      image: busybox
+      command:
+        - sh
+        - -c
+        - |
+          for i in $(seq 1 5); do
+            (sleep 30) &
+          done
+          echo "spawned 5 processes, surviving"
+          sleep 30
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: proc-over
+  namespace: quota-e2e
+spec:
+  restartPolicy: Never
+  containers:
+    - name: fork-stress
+      image: busybox
+      command:
+        - sh
+        - -c
+        - |
+          sleep 5
+          for i in $(seq 1 50); do
+            (sleep 30) &
+          done
+          echo "survived fork bomb"
+          sleep 5
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: fd-hog
+  namespace: quota-e2e-top
+spec:
+  restartPolicy: Never
+  containers:
+    - name: hog
+      image: busybox
+      command:
+        - sh
+        - -c
+        - |
+          for i in $(seq 1 25); do
+            eval "exec $((i + 100))>/dev/null" 2>/dev/null
+          done
+          echo "hog opened 25 FDs, holding"
+          sleep 60
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: fd-trigger
+  namespace: quota-e2e-top
+spec:
+  restartPolicy: Never
+  containers:
+    - name: trigger
+      image: busybox
+      command:
+        - sh
+        - -c
+        - |
+          sleep 3
+          for i in $(seq 1 20); do
+            eval "exec $((i + 200))>/dev/null" 2>/dev/null
+          done
+          echo "trigger survived"
+          sleep 5
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: proc-hog
+  namespace: quota-e2e-top
+spec:
+  restartPolicy: Never
+  containers:
+    - name: hog
+      image: busybox
+      command:
+        - sh
+        - -c
+        - |
+          for i in $(seq 1 10); do
+            (sleep 60) &
+          done
+          echo "hog spawned 10 processes, holding"
+          sleep 60
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: proc-trigger
+  namespace: quota-e2e-top
+spec:
+  restartPolicy: Never
+  containers:
+    - name: trigger
+      image: busybox
+      command:
+        - sh
+        - -c
+        - |
+          sleep 3
+          for i in $(seq 1 15); do
+            (sleep 30) &
+          done
+          echo "trigger survived"
+          sleep 5
